@@ -28,3 +28,5 @@ env/
 .idea/
 *.swp
 *.swo
+context.md
+context.txt
