@@ -1,4 +1,4 @@
-# 🧹 TD — Nettoyage d'un fichier d'employés avec Pandas
+# TD — Nettoyage d'un fichier d'employés avec Pandas
 
 > **Module Data Science** · TD de synthèse du chapitre *Data Cleaning & Transformation with Pandas*
 > **Prérequis** : NumPy, File Handling, et surtout le chapitre **Pandas** (Series, DataFrame, `loc`/`iloc`, filtrage booléen, nettoyage, `groupby`).
