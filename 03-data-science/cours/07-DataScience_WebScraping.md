@@ -762,3 +762,410 @@ print(jours_ensoleilles[["periode", "description"]])
 
 ---
 
+## 10. Practical Example bonus — Cours de la BRVM
+
+Deuxième exemple pratique, plus proche du contexte régional : extraire les **cours des actions** de la **Bourse Régionale des Valeurs Mobilières** (BRVM), qui couvre 8 pays d'Afrique de l'Ouest francophone.
+
+> 📍 **Source utilisée** : `https://www.brvm.org/fr/cours-actions/0` — page publique listant tous les titres cotés, leur volume, cours d'ouverture/clôture et variation du jour.
+
+### 10.1 Cas d'usage — Données tabulaires (`<table>`)
+
+Contrairement à l'exemple météo (des blocs `<div>` répétés), les cours boursiers de la BRVM sont typiquement présentés dans un **tableau HTML** (`<table>`). C'est un cas extrêmement fréquent en Data Science (finance, statistiques officielles, classements sportifs...).
+
+```
+STRUCTURE TYPIQUE D'UN TABLEAU DE COURS BOURSIERS
+│
+<table>
+├── <thead>                          ← en-têtes de colonnes
+│   └── <tr><th>Symbole</th><th>Nom</th><th>Cours Clôture</th>...</tr>
+└── <tbody>                          ← les lignes de données
+    ├── <tr><td>ABJC</td><td>SERVAIR...</td><td>3 180</td>...</tr>
+    ├── <tr><td>BICB</td><td>BANQUE...</td><td>8 000</td>...</tr>
+    └── ... (une ligne par titre coté)
+```
+
+### 10.2 Méthode 1 — Avec `pandas.read_html()` (la plus rapide)
+
+Quand les données sont dans un `<table>` HTML standard, **Pandas peut directement lire le tableau** sans même passer par BeautifulSoup !
+
+> ⚠️ **Piège fréquent** : appeler directement `pd.read_html(url)` échoue souvent en pratique — la fonction va chercher la page elle-même via `urllib`, **sans en-tête `User-Agent`** et sans gérer les certificats SSL de la même façon qu'un vrai navigateur. Résultat typique : un `DataFrame` vide, une liste de tableaux incomplète, ou une erreur SSL — **alors que le tableau existe bel et bien** dans le HTML de la page (comme on peut le vérifier en faisant un clic droit → "Afficher le code source" dans le navigateur).
+>
+> La solution robuste, déjà vue en §5.3 : récupérer la page soi-même avec `requests` (+ `headers`), puis donner le **texte HTML** obtenu à `pd.read_html()` — pas l'URL. Depuis les versions récentes de pandas, il faut envelopper ce texte dans `io.StringIO(...)`, sinon pandas tente de le traiter comme un chemin de fichier ou une URL et lève une erreur.
+
+```python
+import io
+import requests
+import pandas as pd
+
+url = "https://www.brvm.org/fr/cours-actions/0"
+headers = {"User-Agent": "Bootcamp Data Science - usage pédagogique"}
+
+# 1. On récupère la page nous-mêmes (comme un navigateur), pas via pd.read_html(url)
+reponse = requests.get(url, headers=headers, timeout=10)
+reponse.raise_for_status()
+
+# 2. On donne le TEXTE HTML (enveloppé dans StringIO) à read_html, pas l'URL
+tableaux = pd.read_html(io.StringIO(reponse.text))
+print(f"Nombre de tableaux trouvés sur la page : {len(tableaux)}")
+
+# Identifier celui qui contient les cours (généralement en inspectant chaque tableau)
+for i, tab in enumerate(tableaux):
+    print(f"--- Tableau {i} — colonnes : {list(tab.columns)} ---")
+    print(tab.head(2))
+    print()
+```
+
+**Résultat attendu sur la page BRVM** — la page contient en réalité **4 tableaux** (les mini-tableaux "Top 5" et "Flop 5" affichés en haut de page, un résumé de "l'activité du marché", puis le tableau complet des cours) :
+
+```
+Tableau 0 — colonnes : ['Top 5', 'Cours', 'Variation']        (5 lignes)
+Tableau 1 — colonnes : ['Flop 5', 'Cours', 'Variation']       (5 lignes)
+Tableau 2 — colonnes : ['Activités du marché', ...]           (résumé du marché)
+Tableau 3 — colonnes : ['Symbole', 'Nom', 'Volume', ...]      (47 lignes → celui qu'on veut !)
+```
+
+> 💡 **Astuce pratique** : `pd.read_html()` est souvent le moyen **le plus rapide** de scraper des données tabulaires — à condition (1) que les données soient dans une vraie balise `<table>` (et non générées dynamiquement par JavaScript), et (2) qu'on lui fournisse un HTML déjà récupéré avec des en-têtes corrects plutôt qu'une URL brute.
+
+### 10.3 Méthode 2 — Avec BeautifulSoup (plus de contrôle)
+
+Si vous avez besoin de plus de contrôle (par exemple pour cibler un tableau précis via sa classe), utilisez BeautifulSoup directement :
+
+```python
+import requests
+from bs4 import BeautifulSoup
+import pandas as pd
+
+url = "https://www.brvm.org/fr/cours-actions/0"
+headers = {"User-Agent": "Bootcamp Data Science - usage pédagogique"}
+
+reponse = requests.get(url, headers=headers, timeout=10)
+soup = BeautifulSoup(reponse.text, "html.parser")
+
+# ⚠️ Piège : la page BRVM contient PLUSIEURS <table> qui partagent les mêmes
+# classes CSS ("table table-hover table-striped") — les mini-tableaux "Top 5"
+# et "Flop 5" affichés en haut de page, puis le tableau complet des cours.
+# soup.find("table") tout seul attraperait donc le mauvais tableau (le "Top 5",
+# qui n'a que 3 colonnes) ! On cible plutôt le tableau via son en-tête, qui est
+# unique : celui qui commence par la colonne "Symbole".
+tableau = None
+for t in soup.find_all("table"):
+    premier_entete = t.find("th")
+    if premier_entete and premier_entete.text.strip() == "Symbole":
+        tableau = t
+        break
+
+lignes_donnees = []
+if tableau:
+    lignes = tableau.find_all("tr")[1:]   # [1:] pour ignorer la ligne d'en-tête
+    for ligne in lignes:
+        cellules = ligne.find_all("td")
+        if len(cellules) >= 7:
+            lignes_donnees.append({
+                "symbole"        : cellules[0].text.strip(),
+                "nom"            : cellules[1].text.strip(),
+                "volume"         : cellules[2].text.strip(),
+                "cours_veille"   : cellules[3].text.strip(),
+                "cours_ouverture": cellules[4].text.strip(),
+                "cours_cloture"  : cellules[5].text.strip(),
+                "variation"      : cellules[6].text.strip(),
+            })
+
+df_brvm = pd.DataFrame(lignes_donnees)
+print(df_brvm.head())
+```
+
+> ⚠️ **Important** : Les sites web changent régulièrement de structure HTML (mises à jour, refontes). **Ne recopiez jamais un code de scraping sans d'abord inspecter vous-même la page actuelle** dans votre navigateur — les classes CSS exactes indiquées ici sont des exemples pédagogiques à valider/adapter.
+
+### 10.4 Nettoyer les données financières extraites
+
+Les nombres extraits du web sont du **texte** (avec espaces, symboles `%`, virgules) — il faut les convertir en valeurs numériques exploitables.
+
+```python
+# Exemple de nettoyage typique de données financières scrapées
+def nettoyer_nombre(texte):
+    """Convertit '12 155' ou '3,28%' en valeur numérique."""
+    if not texte or texte == "N/A":
+        return None
+    texte_propre = texte.replace(" ", "").replace("\xa0", "").replace("%", "").replace(",", ".")
+    try:
+        return float(texte_propre)
+    except ValueError:
+        return None
+
+# Application sur le DataFrame
+df_brvm["cours_cloture_num"] = df_brvm["cours_cloture"].apply(nettoyer_nombre)
+df_brvm["variation_num"]     = df_brvm["variation"].apply(nettoyer_nombre)
+
+# Trouver le titre avec la plus forte hausse
+meilleur = df_brvm.loc[df_brvm["variation_num"].idxmax()]
+print(f"Plus forte hausse : {meilleur['nom']} ({meilleur['variation_num']}%)")
+```
+
+---
+
+## 11. Conclusion
+
+### 📌 Récapitulatif du chapitre
+
+```
+WEB SCRAPING AVEC PYTHON
+│
+├── Légalité & éthique   → robots.txt, CGU, RGPD, time.sleep() (politesse)
+│
+├── Comprendre le HTML    → balises, arbre DOM, class vs id
+│
+├── Outils                → requests (récupérer) + BeautifulSoup (parser)
+│
+├── Extraction ciblée
+│   ├── .find() / .find_all()   → par balise, classe, id
+│   └── .select() / .select_one() → sélecteurs CSS
+│
+├── Cas tabulaire          → pandas.read_html() pour les <table>
+│
+├── Robustesse             → try/except, vérifier avant d'accéder,
+│                            gérer les codes de statut HTTP
+│
+└── Pipeline complet        → requête → parsing → extraction →
+                              nettoyage → DataFrame → CSV
+```
+
+### 🔑 Points clés à retenir
+
+1. **Toujours vérifier la légalité** (`robots.txt`, CGU) avant de scraper un site.
+2. Le HTML est un **arbre** ; `class` et `id` sont les clés pour cibler des éléments précis.
+3. `requests` récupère la page, `BeautifulSoup` la transforme en structure navigable.
+4. `.find()` retourne le **premier** résultat, `.find_all()` retourne **tous** les résultats (une liste).
+5. Pour des données dans un `<table>` HTML, `pandas.read_html()` est souvent le chemin le plus rapide.
+6. **Être un bon citoyen du web** : `time.sleep()` entre les requêtes, `User-Agent` honnête, ne pas surcharger les serveurs.
+7. Les données extraites du web sont du **texte brut** — il faut presque toujours les **nettoyer** avant analyse.
+
+### 🗺️ Ce qui vient ensuite
+
+Dans le prochain chapitre, nous découvrirons **Pandas** en profondeur — la bibliothèque idéale pour **structurer, nettoyer et analyser** les données que vous venez d'apprendre à extraire du web (DataFrames, filtres, `groupby`, fusion de tableaux, gestion des valeurs manquantes).
+
+---
+
+## 12. ✅ Point de contrôle — Web Scraping
+
+### 📝 Questions théoriques
+
+**Q1.** Pourquoi est-il important de consulter le fichier `robots.txt` avant de scraper un site ?
+
+<details>
+<summary>👀 Voir la réponse</summary>
+
+> Le `robots.txt` indique quelles parties d'un site les robots sont autorisés ou non à visiter. L'ignorer expose à des risques juridiques (violation potentielle des CGU), éthiques, et peut entraîner un blocage de votre adresse IP. C'est la première vérification à faire avant tout projet de scraping.
+</details>
+
+---
+
+**Q2.** Quelle est la différence entre `class` et `id` en HTML, du point de vue du scraping ?
+
+<details>
+<summary>👀 Voir la réponse</summary>
+
+> Un `id` est **unique** dans toute la page — un seul élément peut avoir un `id` donné, ce qui le rend idéal pour cibler un conteneur précis avec `.find(id="...")`. Une `class` peut être **partagée** par plusieurs éléments, ce qui est utile pour cibler tous les éléments similaires (ex : tous les prix d'une page) avec `.find_all(class_="...")`.
+</details>
+
+---
+
+**Q3.** Quelle est la différence entre `.find()` et `.find_all()` en BeautifulSoup ?
+
+<details>
+<summary>👀 Voir la réponse</summary>
+
+> `.find()` retourne le **premier** élément correspondant aux critères (ou `None` s'il n'existe pas). `.find_all()` retourne **une liste de tous** les éléments correspondants (liste vide si aucun résultat).
+</details>
+
+---
+
+**Q4.** Pourquoi utilise-t-on `time.sleep()` entre les requêtes lors d'un scraping de plusieurs pages ?
+
+<details>
+<summary>👀 Voir la réponse</summary>
+
+> `time.sleep()` espace les requêtes dans le temps pour éviter de **surcharger le serveur** cible et de se faire **bloquer** (l'envoi de centaines de requêtes en une seconde peut être perçu comme une attaque). C'est une pratique de politesse et de responsabilité envers l'infrastructure du site scrapé.
+</details>
+
+---
+
+**Q5.** Dans quel cas privilégier `pandas.read_html()` plutôt que BeautifulSoup ?
+
+<details>
+<summary>👀 Voir la réponse</summary>
+
+> `pandas.read_html()` est idéal quand les données sont déjà structurées dans une vraie balise HTML `<table>` — il extrait automatiquement tous les tableaux de la page en DataFrames, sans code de parsing manuel. BeautifulSoup reste nécessaire pour des structures plus complexes (divs répétés, données non tabulaires) ou quand on a besoin de cibler un tableau précis parmi plusieurs.
+</details>
+
+---
+
+### 💻 Exercices pratiques
+
+**Exercice 1 — Requête et statut**
+
+Envoyez une requête GET vers `https://forecast.weather.gov/MapClick.php?lat=37.7772&lon=-122.4168`, affichez le code de statut, et vérifiez qu'il vaut 200.
+
+<details>
+<summary>👀 Voir la solution</summary>
+
+```python
+import requests
+
+url = "https://forecast.weather.gov/MapClick.php?lat=37.7772&lon=-122.4168"
+headers = {"User-Agent": "Bootcamp Data Science - usage pédagogique"}
+
+reponse = requests.get(url, headers=headers, timeout=10)
+print("Statut :", reponse.status_code)
+
+if reponse.status_code == 200:
+    print("✅ Page récupérée avec succès")
+```
+</details>
+
+---
+
+**Exercice 2 — Parsing et titre**
+
+À partir de la réponse de l'exercice 1, créez un objet `BeautifulSoup` et affichez le titre de la page (`<title>`).
+
+<details>
+<summary>👀 Voir la solution</summary>
+
+```python
+from bs4 import BeautifulSoup
+
+soup = BeautifulSoup(reponse.text, "html.parser")
+print(soup.title.text)
+```
+</details>
+
+---
+
+**Exercice 3 — Extraction ciblée**
+
+Cherchez tous les éléments `<p class="period-name">` de la page météo et affichez leur texte (les noms des périodes : "Overnight", "Wednesday"...).
+
+<details>
+<summary>👀 Voir la solution</summary>
+
+```python
+periodes = soup.find_all("p", class_="period-name")
+for p in periodes:
+    print(p.text.strip())
+```
+</details>
+
+---
+
+**Exercice 4 — Sélecteurs CSS**
+
+Refaites l'exercice 3, mais en utilisant `.select()` avec un sélecteur CSS plutôt que `.find_all()`.
+
+<details>
+<summary>👀 Voir la solution</summary>
+
+```python
+periodes = soup.select("p.period-name")
+for p in periodes:
+    print(p.text.strip())
+```
+</details>
+
+---
+
+**Exercice 5 — Pipeline complet**
+
+Construisez une fonction `scraper_meteo(url)` qui retourne un DataFrame Pandas avec les colonnes `periode`, `description`, `temperature` pour une URL météo donnée.
+
+<details>
+<summary>👀 Voir la solution</summary>
+
+```python
+import requests
+from bs4 import BeautifulSoup
+import pandas as pd
+
+def scraper_meteo(url):
+    headers = {"User-Agent": "Bootcamp Data Science - usage pédagogique"}
+    reponse = requests.get(url, headers=headers, timeout=10)
+
+    if reponse.status_code != 200:
+        print(f"❌ Erreur : statut {reponse.status_code}")
+        return None
+
+    soup = BeautifulSoup(reponse.text, "html.parser")
+    conteneur = soup.find(id="seven-day-forecast")
+    periodes = conteneur.find_all("div", class_="tombstone-container")
+
+    donnees = []
+    for p in periodes:
+        nom  = p.find("p", class_="period-name")
+        desc = p.find("p", class_="short-desc")
+        temp = p.find("p", class_=lambda c: c and "temp" in c)
+        donnees.append({
+            "periode"     : nom.text.strip() if nom else "N/A",
+            "description" : desc.text.strip() if desc else "N/A",
+            "temperature" : temp.text.strip() if temp else "N/A"
+        })
+
+    return pd.DataFrame(donnees)
+
+df = scraper_meteo("https://forecast.weather.gov/MapClick.php?lat=37.7772&lon=-122.4168")
+print(df)
+```
+</details>
+
+---
+
+### 🏆 Challenge bonus
+
+En utilisant `pandas.read_html()` sur la page `https://www.brvm.org/fr/cours-actions/0` :
+1. Identifiez le tableau contenant les cours des actions
+2. Nettoyez la colonne de variation (`%`) pour la convertir en nombre
+3. Affichez les 5 titres ayant la plus forte variation positive
+4. Affichez les 5 titres ayant la plus forte variation négative
+
+*Indice : après avoir identifié le bon tableau avec `pd.read_html()`, utilisez `.sort_values()` sur la colonne de variation numérique.*
+
+<details>
+<summary>👀 Voir une piste de solution</summary>
+
+```python
+import io
+import requests
+import pandas as pd
+
+url = "https://www.brvm.org/fr/cours-actions/0"
+headers = {"User-Agent": "Bootcamp Data Science - usage pédagogique"}
+
+# On récupère nous-mêmes le HTML (cf. §10.2) plutôt que de passer l'URL
+# directement à pd.read_html() — voir l'encart "Piège fréquent" plus haut.
+reponse = requests.get(url, headers=headers, timeout=10)
+tableaux = pd.read_html(io.StringIO(reponse.text))
+
+# Inspecter chaque tableau pour trouver celui des cours
+for i, t in enumerate(tableaux):
+    print(f"Tableau {i} — colonnes : {list(t.columns)}")
+
+# Une fois identifié (à adapter selon l'indice trouvé) :
+df_cours = tableaux[i]   # remplacer i par l'indice du bon tableau
+
+# Nettoyer la colonne de variation (adapter le nom de colonne)
+df_cours["variation_num"] = (
+    df_cours["Variation (%)"]
+    .astype(str)
+    .str.replace(",", ".")
+    .astype(float)
+)
+
+top5_hausse  = df_cours.sort_values("variation_num", ascending=False).head(5)
+top5_baisse  = df_cours.sort_values("variation_num", ascending=True).head(5)
+
+print("Top 5 hausses :\n", top5_hausse)
+print("\nTop 5 baisses :\n", top5_baisse)
+```
+</details>
+
+---
+
+*📘 Module Data Science — Python Web Scraping | Bootcamp Data Science*
