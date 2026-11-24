@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 360" width="860" height="360" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+<rect width="860" height="360" rx="14" fill="#fcfcfb"/>
+<defs><marker id="fl" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#52514e"/></marker></defs>
+<text x="430" y="32" font-size="15" fill="#0b0b0b" text-anchor="middle" font-weight="bold" font-style="normal" >Un RNN déroulé dans le temps : l'information doit traverser toute la chaîne</text>
+<rect x="45" y="140" width="90" height="56" rx="8" fill="#fde7dc" stroke="#d4581f" stroke-width="2"/>
+<text x="90" y="173" font-size="14" fill="#0b0b0b" text-anchor="middle" font-weight="bold" font-style="normal" >h0</text>
+<text x="90" y="120" font-size="12" fill="#52514e" text-anchor="middle" font-weight="normal" font-style="normal" >Le</text>
+<rect x="185" y="140" width="90" height="56" rx="8" fill="#fde7dc" stroke="#d4581f" stroke-width="2"/>
+<text x="230" y="173" font-size="14" fill="#0b0b0b" text-anchor="middle" font-weight="bold" font-style="normal" >h1</text>
+<text x="230" y="120" font-size="12" fill="#52514e" text-anchor="middle" font-weight="normal" font-style="normal" >chat</text>
+<line x1="135" y1="168" x2="185" y2="168" stroke="#52514e" stroke-width="2" marker-end="url(#fl)"/>
+<rect x="325" y="140" width="90" height="56" rx="8" fill="#fde7dc" stroke="#d4581f" stroke-width="2"/>
+<text x="370" y="173" font-size="14" fill="#0b0b0b" text-anchor="middle" font-weight="bold" font-style="normal" >h2</text>
+<text x="370" y="120" font-size="12" fill="#52514e" text-anchor="middle" font-weight="normal" font-style="normal" >noir</text>
+<line x1="275" y1="168" x2="325" y2="168" stroke="#52514e" stroke-width="2" marker-end="url(#fl)"/>
+<rect x="465" y="140" width="90" height="56" rx="8" fill="#fde7dc" stroke="#d4581f" stroke-width="2"/>
+<text x="510" y="173" font-size="14" fill="#0b0b0b" text-anchor="middle" font-weight="bold" font-style="normal" >h3</text>
+<text x="510" y="120" font-size="12" fill="#52514e" text-anchor="middle" font-weight="normal" font-style="normal" >que</text>
+<line x1="415" y1="168" x2="465" y2="168" stroke="#52514e" stroke-width="2" marker-end="url(#fl)"/>
+<rect x="605" y="140" width="90" height="56" rx="8" fill="#fde7dc" stroke="#d4581f" stroke-width="2"/>
+<text x="650" y="173" font-size="14" fill="#0b0b0b" text-anchor="middle" font-weight="bold" font-style="normal" >h4</text>
+<text x="650" y="120" font-size="12" fill="#52514e" text-anchor="middle" font-weight="normal" font-style="normal" >...</text>
+<line x1="555" y1="168" x2="605" y2="168" stroke="#52514e" stroke-width="2" marker-end="url(#fl)"/>
+<rect x="745" y="140" width="90" height="56" rx="8" fill="#e3f6ee" stroke="#14875e" stroke-width="2"/>
+<text x="790" y="173" font-size="14" fill="#0b0b0b" text-anchor="middle" font-weight="bold" font-style="normal" >h5</text>
+<text x="790" y="120" font-size="12" fill="#52514e" text-anchor="middle" font-weight="normal" font-style="normal" >dormait</text>
+<line x1="695" y1="168" x2="745" y2="168" stroke="#52514e" stroke-width="2" marker-end="url(#fl)"/>
+<text x="430" y="230" font-size="12" fill="#52514e" text-anchor="middle" font-weight="normal" font-style="normal" >le gradient doit remonter h5 → h4 → h3 → h2 → h1 → h0 pour corriger le tout début</text>
+<path d="M 790 196 C 790 260, 90 260, 90 196" fill="none" stroke="#d4581f" stroke-width="2" marker-end="url(#fl)"/>
+<text x="430" y="285" font-size="12" fill="#d4581f" text-anchor="middle" font-weight="normal" font-style="italic" >à chaque étape, le gradient est multiplié : s'il est < 1, il s'évanouit avant d'arriver</text>
+<text x="430" y="305" font-size="13" fill="#0b0b0b" text-anchor="middle" font-weight="bold" font-style="normal" >⚠️ le réseau "oublie" les informations trop anciennes dans la séquence</text>
+<rect x="40" y="325" width="16" height="16" rx="4" fill="#fde7dc" stroke="#d4581f" stroke-width="2"/>
+<text x="64" y="338" font-size="12" fill="#52514e" text-anchor="start" font-weight="normal" font-style="normal" >état caché intermédiaire</text>
+<rect x="400" y="325" width="16" height="16" rx="4" fill="#e3f6ee" stroke="#14875e" stroke-width="2"/>
+<text x="424" y="338" font-size="12" fill="#52514e" text-anchor="start" font-weight="normal" font-style="normal" >dernier état = tout le contexte compressé</text>
+</svg>

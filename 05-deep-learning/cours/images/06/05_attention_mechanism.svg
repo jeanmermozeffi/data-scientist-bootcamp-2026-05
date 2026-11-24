@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 420" width="860" height="420" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+<rect width="860" height="420" rx="14" fill="#fcfcfb"/>
+<defs><marker id="fl" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#52514e"/></marker></defs>
+<text x="430" y="32" font-size="16" fill="#0b0b0b" text-anchor="middle" font-weight="bold" font-style="normal" >Le mécanisme d'attention, étape par étape</text>
+<text x="150" y="65" font-size="13" fill="#d4581f" text-anchor="middle" font-weight="bold" font-style="normal" >États de l'encodeur</text>
+<rect x="55" y="85" width="70" height="46" rx="8" fill="#fde7dc" stroke="#d4581f" stroke-width="2"/>
+<text x="90" y="113" font-size="13" fill="#0b0b0b" text-anchor="middle" font-weight="bold" font-style="normal" >h1</text>
+<rect x="145" y="85" width="70" height="46" rx="8" fill="#fde7dc" stroke="#d4581f" stroke-width="2"/>
+<text x="180" y="113" font-size="13" fill="#0b0b0b" text-anchor="middle" font-weight="bold" font-style="normal" >h2</text>
+<rect x="235" y="85" width="70" height="46" rx="8" fill="#fde7dc" stroke="#d4581f" stroke-width="2"/>
+<text x="270" y="113" font-size="13" fill="#0b0b0b" text-anchor="middle" font-weight="bold" font-style="normal" >h3</text>
+<rect x="325" y="85" width="70" height="46" rx="8" fill="#fde7dc" stroke="#d4581f" stroke-width="2"/>
+<text x="360" y="113" font-size="13" fill="#0b0b0b" text-anchor="middle" font-weight="bold" font-style="normal" >h4</text>
+<rect x="470" y="85" width="90" height="46" rx="8" fill="#e8eef6" stroke="#7b93b3" stroke-width="2"/>
+<text x="515" y="113" font-size="12" fill="#0b0b0b" text-anchor="middle" font-weight="bold" font-style="normal" >requête dt</text>
+<path d="M 90 131 C 90 160, 455 170, 515 131" fill="none" stroke="#c3c2b7" stroke-width="2" marker-end="url(#fl)"/>
+<path d="M 180 131 C 180 160, 470 170, 515 131" fill="none" stroke="#c3c2b7" stroke-width="2" marker-end="url(#fl)"/>
+<path d="M 270 131 C 270 160, 485 170, 515 131" fill="none" stroke="#c3c2b7" stroke-width="2" marker-end="url(#fl)"/>
+<path d="M 360 131 C 360 160, 500 170, 515 131" fill="none" stroke="#c3c2b7" stroke-width="2" marker-end="url(#fl)"/>
+<text x="300" y="195" font-size="13" fill="#0b0b0b" text-anchor="middle" font-weight="bold" font-style="normal" >scores = h_i · dt / √d   →   softmax   →   α_i</text>
+<rect x="55" y="230" width="70" height="40" rx="8" fill="#f3f2ee" stroke="#c3c2b7" stroke-width="2"/>
+<text x="90" y="256" font-size="12" fill="#52514e" text-anchor="middle" font-weight="normal" font-style="normal" >α=0.05</text>
+<line x1="90" y1="131" x2="90" y2="230" stroke="#52514e" stroke-width="2" marker-end="url(#fl)"/>
+<rect x="145" y="230" width="70" height="40" rx="8" fill="#f3f2ee" stroke="#c3c2b7" stroke-width="2"/>
+<text x="180" y="256" font-size="12" fill="#52514e" text-anchor="middle" font-weight="normal" font-style="normal" >α=0.08</text>
+<line x1="180" y1="131" x2="180" y2="230" stroke="#52514e" stroke-width="2" marker-end="url(#fl)"/>
+<rect x="235" y="230" width="70" height="40" rx="8" fill="#f3f2ee" stroke="#c3c2b7" stroke-width="2"/>
+<text x="270" y="256" font-size="12" fill="#52514e" text-anchor="middle" font-weight="normal" font-style="normal" >α=0.72</text>
+<line x1="270" y1="131" x2="270" y2="230" stroke="#52514e" stroke-width="2" marker-end="url(#fl)"/>
+<rect x="325" y="230" width="70" height="40" rx="8" fill="#f3f2ee" stroke="#c3c2b7" stroke-width="2"/>
+<text x="360" y="256" font-size="12" fill="#52514e" text-anchor="middle" font-weight="normal" font-style="normal" >α=0.15</text>
+<line x1="360" y1="131" x2="360" y2="230" stroke="#52514e" stroke-width="2" marker-end="url(#fl)"/>
+<text x="300" y="300" font-size="13" fill="#0b0b0b" text-anchor="middle" font-weight="bold" font-style="normal" >contexte = Σ αi · hi  (somme pondérée)</text>
+<rect x="470" y="325" width="90" height="46" rx="8" fill="#e3f6ee" stroke="#14875e" stroke-width="2"/>
+<text x="515" y="353" font-size="13" fill="#0b0b0b" text-anchor="middle" font-weight="bold" font-style="normal" >contexte</text>
+<path d="M 90 270 C 90 300, 475 310, 515 325" fill="none" stroke="#14875e" stroke-width="2" marker-end="url(#fl)"/>
+<path d="M 180 270 C 180 300, 487 310, 515 325" fill="none" stroke="#14875e" stroke-width="2" marker-end="url(#fl)"/>
+<path d="M 270 270 C 270 300, 499 310, 515 325" fill="none" stroke="#14875e" stroke-width="2" marker-end="url(#fl)"/>
+<path d="M 360 270 C 360 300, 511 310, 515 325" fill="none" stroke="#14875e" stroke-width="2" marker-end="url(#fl)"/>
+<text x="430" y="400" font-size="12" fill="#52514e" text-anchor="middle" font-weight="normal" font-style="normal" >→ le décodeur regarde directement les bonnes positions de l'entrée, sans tout compresser</text>
+</svg>

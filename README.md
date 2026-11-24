@@ -30,7 +30,9 @@ Matériel de cours et exercices pour la promotion data science de mai 2026.
 05-deep-learning/
 ├── cours/                # 01 Fondamentaux IA/ML/DL · 02 Checkpoint 9 Réseau de neurones
 │   │                     # 03 Forward & Backward Propagation · 04 Concevoir et entraîner des CNN
-│   └── images/           # Illustrations des cours 03 et 04
+│   │                     # 06 Encoder-Decoder and BERT · 07 Advanced Architectures (Autoencoders, VAE, Diffusion)
+│   │                     # (06 et 07 : NumPy et scikit-learn uniquement, pas besoin de TensorFlow)
+│   └── images/           # Illustrations des cours 03, 04, 06 et 07
 └── notebooks/            # Notebooks interactifs (Colab : activer le GPU pour le notebook 04)
 
 data/                     # Jeux de données partagés (CSV)
